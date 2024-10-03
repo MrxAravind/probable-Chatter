@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chatting UI - Mobile Version</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    .chat-container {
+      height: 700px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .user-message {
+      background-color: #f1f1f1;
+      padding: 5px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    .bot-message {
+      background-color: #e9f5fd;
+      padding: 5px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    .input-container {
+      display: flex;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .input-text {
+      flex-basis: calc(100% - 70px);
+      padding: 5px;
+      margin-bottom: 5px;
+    }
+    .input-button {
+      flex-basis: 70px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="input-container">
+      <input type="text" class="input-text" id="user-input" placeholder="Type your message">
+      <button class="input-button" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    function fetchMessages() {
+  $.ajax({
+    url: '/get_messages',
+    method: 'GET',
+    success: function(response) {
+      var messages = response.messages;
+      var chatMessages = document.getElementById("chat-messages");
+      chatMessages.innerHTML = ""; // Clear previous messages
+      for (var i = 0; i < messages.length; i++) {
+        var message = messages[i];
+        var messageElement = document.createElement("div");
+        messageElement.classList.add("user-message");
+        messageElement.innerHTML = "<strong>" + message.sender + ": </strong>" + message.message;
+        chatMessages.appendChild(messageElement);
+      }
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    },
+    error: function(xhr, status, error) {
+      console.error(error);
+    }
+  });
+}
+
+// Fetch messages on page load
+window.addEventListener("load", fetchMessages);
+
+    function sendMessage() {
+      var userInput = document.getElementById("user-input");
+      var chatMessages = document.getElementById("chat-messages");
+
+      var userMessage = userInput.value;
+      req = $.ajax({
+            url : '/add',
+            type : 'POST',
+            data : { username : "{{username}}", message : userMessage}
+        });
+      req.done(function(data) {
+             var reply = data.bot_response;
+             console.log(reply);
+       
+            if (userMessage.trim() !== "") {
+              var userMessageElement = document.createElement("div");
+              userMessageElement.classList.add("user-message");
+              userMessageElement.innerHTML = "<strong>" + "{{username}}" + ": </strong>" + userMessage;
+
+              chatMessages.appendChild(userMessageElement);
+
+              // Simulate a bot response
+              setTimeout(function() {
+                var botMessageElement = document.createElement("div");
+                botMessageElement.classList.add("bot-message");
+                botMessageElement.innerHTML = "<strong>" + "Bot" + ": </strong>" + reply;
+
+                chatMessages.appendChild(botMessageElement);
+
+                // Scroll to the bottom of the chat messages
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+              }, 500);
+
+              // Clear the user input
+              userInput.value = "";
+            }
+          });
+    }
+  </script>
+<script src="http://code.jquery.com/jquery.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    
+</body>
+</html>
